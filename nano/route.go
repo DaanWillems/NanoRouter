@@ -1,7 +1,6 @@
 package nano
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -33,8 +32,6 @@ func (r *Route) matchURL(rawURL string) bool {
 	reg, _ := regexp.Compile(":[a-zA-Z0-9]")
 
 	for i, c := range url {
-		fmt.Println("Comparing: " + c + " to: " + path[i])
-
 		if len(url) != len(path) {
 			return false
 		}
