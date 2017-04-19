@@ -1,35 +1,63 @@
-package nano
+package NanoRouter
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 )
 
 var Vars map[string]string
 
 type Router struct {
-	routes   []*Route
-	NotFound *Route
+	static        string
+	routes        []*Route
+	NotFound      *Route
+	staticHandler *Route
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("ROUTE: " + req.URL.String())
 	route := r.find(req)
 	route.parseVars(req)
 	route.Handle(w, req)
 }
 
 func NewRouter() *Router {
-	return &Router{}
+	r := &Router{}
+	return r
 }
 
-func (r *Router) NewRoute(httpMethod string, route string, f func(http.ResponseWriter, *http.Request)) {
-	r.routes = append(r.routes, &Route{method: httpMethod, path: route, handler: http.HandlerFunc(f)})
+func (r *Router) NewRoute(httpMethod string, route string, f func(http.ResponseWriter, *http.Request)) *Route {
+	nr := &Route{method: httpMethod, Path: route, handler: http.HandlerFunc(f)}
+	r.routes = append(r.routes, nr)
+	return nr
 }
 
 func (r *Router) SetNotFoundRoute(f func(http.ResponseWriter, *http.Request)) {
-	r.NotFound = &Route{path: "/pagenotfound", handler: http.HandlerFunc(f)}
+	r.NotFound = &Route{Path: "/pagenotfound", handler: http.HandlerFunc(f)}
+}
+
+func (r *Router) SetFaviconRoute(f func(http.ResponseWriter, *http.Request)) {
+	r.NotFound = &Route{Path: "/favicon.ico", handler: http.HandlerFunc(f)}
+}
+
+func (r *Router) SetStaticPath(path string) {
+	fmt.Println("test: " + path)
+
+	r.staticHandler = r.NewRoute("GET", "/public/", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Println("test")
+		http.ServeFile(w, req, req.URL.Path[1:])
+	})
 }
 
 func (r *Router) find(req *http.Request) *Route {
+	url := strings.Split(req.URL.String(), "/")
+	path := strings.Split(r.staticHandler.Path, "/")
+	
+	if url[1] == path[1] {
+		return r.staticHandler
+	}
+
 	for _, route := range r.routes {
 		if route.match(req) {
 			return route
