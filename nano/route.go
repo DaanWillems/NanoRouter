@@ -30,8 +30,8 @@ func (r *Route) match(req *http.Request) bool {
 func (r *Route) matchURL(rawURL string) bool {
 	url := strings.Split(rawURL, "/")
 	path := strings.Split(r.path, "/")
-
 	reg, _ := regexp.Compile(":[a-zA-Z0-9]")
+
 	for i, c := range url {
 		fmt.Println("Comparing: " + c + " to: " + path[i])
 
@@ -63,7 +63,6 @@ func (r *Route) parseVars(req *http.Request) {
 
 	for i, p := range path {
 		if reg.MatchString(p) {
-			fmt.Println("test: " + p[1:len(p)])
 			Vars[p[1:len(p)]] = url[i]
 		}
 	}
