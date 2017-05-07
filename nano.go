@@ -42,31 +42,28 @@ func (r *Router) SetFaviconRoute(f func(http.ResponseWriter, *http.Request)) {
 	r.NotFound = &Route{Path: "/favicon.ico", handler: http.HandlerFunc(f)}
 }
 
-func (r *Router) SetStaticPath(path string, dir string) {
-	r.StaticHandler = r.NewRoute("GET", path, func(w http.ResponseWriter, req *http.Request) {
-		http.StripPrefix(path, http.FileServer(http.Dir(dir)))
-		http.ServeFile(w, req, req.URL.Path[1:])
+func (r *Router) SetStaticPath(dir string) {
+	r.StaticHandler = r.NewRoute("GET", "", func(w http.ResponseWriter, req *http.Request) {
+		if strings.HasSuffix(req.URL.Path, "/") {
+			http.NotFound(w, req)
+			return
+		}
+		http.ServeFile(w, req, dir+req.URL.Path[1:])
 	})
 }
 
 func (r *Router) find(req *http.Request) *Route {
-	fmt.Println("test1")
-	url := strings.Split(req.URL.String(), "/")
-	if r.StaticHandler != nil {
-		fmt.Println("test2")
-		path := strings.Split(r.StaticHandler.Path, "/")
-		if url[1] == path[1] {
-			fmt.Println("test3")
-			return r.StaticHandler
-		}
-	}
-
 	for _, route := range r.routes {
 		if route.match(req) {
 			return route
 		}
 	}
-	return r.NotFound
+
+	if r.StaticHandler == nil {
+		return r.NotFound
+	}
+
+	return r.StaticHandler
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
