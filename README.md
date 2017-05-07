@@ -1,25 +1,33 @@
-### Usage
+### Usage example
 ---
 
 ```golang
+import "NanoRouter"
+
 func main() {
-	router := nano.NewRouter()
-	router.NewRoute("GET", "/get/:example", get)
-	router.NewRoute("POST", "/post", post)
-	router.SetNotFoundRoute(notfound)
+	router := NanoRouter.NewRouter()
+	router.NewRoute("GET", "/get/:example", getHandler)
+	router.NewRoute("POST", "/post", postHandler)
+	router.SetNotFoundRoute(notfoundHandler)
 	http.Handle("/", router)
 	http.ListenAndServe(":8380", nil)
 }
 
-func notfound(w http.ResponseWriter, r *http.Request) {
+func notfoundHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Unknown page")
 }
 
-func get(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, nano.Vars["test"]+"get")
+func getHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, NanoRouter.Vars["test"])
 }
 
-func post(w http.ResponseWriter, r *http.Request) {
+func postHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "post")
 }
+```
+
+### Not found
+When an url is not found NanoRouter automatically returns the string 'not found'. This behaviour can be overridden with:
+```golang
+	router.SetNotFoundRoute(handler)
 ```
