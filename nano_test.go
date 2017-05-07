@@ -8,8 +8,16 @@ import (
 )
 
 //Test handler
-func test(w http.ResponseWriter, r *http.Request) {
+func test(w http.ResponseWriter, r *http.Request, vars map[string]string) {
 	fmt.Fprintf(w, "succes")
+}
+
+func testvar(w http.ResponseWriter, r *http.Request, vars map[string]string) {
+	s := ""
+	for k, v := range vars {
+		s += k + ":" + v
+	}
+	fmt.Fprintf(w, s)
 }
 
 func TestEmptyUrl(t *testing.T) {
@@ -127,7 +135,7 @@ func TestUrlVar(t *testing.T) {
 
 	r := NewRouter()
 
-	r.NewRoute("GET", "/test/:id", test)
+	r.NewRoute("GET", "/test/:id", testvar)
 
 	req, err := http.NewRequest("GET", "/test/1", nil)
 
@@ -137,10 +145,10 @@ func TestUrlVar(t *testing.T) {
 
 	r.ServeHTTP(rr, req)
 
-	expected := "1"
+	expected := "id:1"
 
-	if Vars["id"] != expected {
-		t.Errorf("handler returned unexpected variable: got %v want %v", Vars["id"], expected)
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected variable: got %v want %v", rr.Body.String(), expected)
 	}
 }
 
@@ -149,7 +157,7 @@ func TestSingleUrlVar(t *testing.T) {
 
 	r := NewRouter()
 
-	r.NewRoute("GET", "/:id", test)
+	r.NewRoute("GET", "/:id", testvar)
 
 	req, err := http.NewRequest("GET", "/1", nil)
 
@@ -159,10 +167,10 @@ func TestSingleUrlVar(t *testing.T) {
 
 	r.ServeHTTP(rr, req)
 
-	expected := "1"
+	expected := "id:1"
 
-	if Vars["id"] != expected {
-		t.Errorf("handler returned unexpected variable: got %v want %v", Vars["id"], expected)
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected variable: got %v want %v", rr.Body.String(), expected)
 	}
 }
 
@@ -171,7 +179,7 @@ func TestTwoUrlVar(t *testing.T) {
 
 	r := NewRouter()
 
-	r.NewRoute("GET", "/varone/:id/vartwo/:name", test)
+	r.NewRoute("GET", "/varone/:id/vartwo/:name", testvar)
 
 	req, err := http.NewRequest("GET", "/varone/1/vartwo/name", nil)
 
@@ -181,15 +189,10 @@ func TestTwoUrlVar(t *testing.T) {
 
 	r.ServeHTTP(rr, req)
 
-	expectedVarOne := "1"
-	expectedVarTwo := "name"
+	expected := "id:1name:name"
 
-	if Vars["id"] != expectedVarOne {
-		t.Errorf("handler returned unexpected variable: got %v want %v", Vars["id"], expectedVarOne)
-	}
-
-	if Vars["name"] != expectedVarTwo {
-		t.Errorf("handler returned unexpected variable: got %v want %v", Vars["id"], expectedVarTwo)
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected variable: got %v want %v", rr.Body.String(), expected)
 	}
 }
 
