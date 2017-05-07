@@ -43,17 +43,20 @@ func (r *Router) SetFaviconRoute(f func(http.ResponseWriter, *http.Request)) {
 }
 
 func (r *Router) SetStaticPath(path string) {
-	r.staticHandler = r.NewRoute("GET", "/public/", func(w http.ResponseWriter, req *http.Request) {
+	r.staticHandler = r.NewRoute("GET", path, func(w http.ResponseWriter, req *http.Request) {
+		http.StripPrefix("/static/", http.FileServer(http.Dir("static")))
 		http.ServeFile(w, req, req.URL.Path[1:])
 	})
 }
 
 func (r *Router) find(req *http.Request) *Route {
 	url := strings.Split(req.URL.String(), "/")
-
+	fmt.Println("test")
 	if r.staticHandler != nil {
+		fmt.Println("test1")
 		path := strings.Split(r.staticHandler.Path, "/")
 		if url[1] == path[1] {
+			fmt.Println("test2")
 			return r.staticHandler
 		}
 	}
