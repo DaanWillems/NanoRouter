@@ -50,10 +50,13 @@ func (r *Router) SetStaticPath(path string, dir string) {
 }
 
 func (r *Router) find(req *http.Request) *Route {
+	fmt.Println("test1")
 	url := strings.Split(req.URL.String(), "/")
 	if r.StaticHandler != nil {
+		fmt.Println("test2")
 		path := strings.Split(r.StaticHandler.Path, "/")
 		if url[1] == path[1] {
+			fmt.Println("test3")
 			return r.StaticHandler
 		}
 	}
