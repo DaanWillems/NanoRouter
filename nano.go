@@ -24,6 +24,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func NewRouter() *Router {
 	r := &Router{}
+	r.SetNotFoundRoute(notFound)
 	return r
 }
 
@@ -42,20 +43,19 @@ func (r *Router) SetFaviconRoute(f func(http.ResponseWriter, *http.Request)) {
 }
 
 func (r *Router) SetStaticPath(path string) {
-	fmt.Println("test: " + path)
-
 	r.staticHandler = r.NewRoute("GET", "/public/", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Println("test")
 		http.ServeFile(w, req, req.URL.Path[1:])
 	})
 }
 
 func (r *Router) find(req *http.Request) *Route {
 	url := strings.Split(req.URL.String(), "/")
-	path := strings.Split(r.staticHandler.Path, "/")
-	
-	if url[1] == path[1] {
-		return r.staticHandler
+
+	if r.staticHandler != nil {
+		path := strings.Split(r.staticHandler.Path, "/")
+		if url[1] == path[1] {
+			return r.staticHandler
+		}
 	}
 
 	for _, route := range r.routes {
@@ -64,4 +64,8 @@ func (r *Router) find(req *http.Request) *Route {
 		}
 	}
 	return r.NotFound
+}
+
+func notFound(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "not found")
 }

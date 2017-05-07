@@ -55,10 +55,8 @@ func (r *Route) parseVars(req *http.Request) {
 	for k, v := range req.URL.Query() {
 		Vars[k] = v[0]
 	}
-	if req.URL.String() != "/" {
-		return
-	}
-	reg, _ := regexp.Compile(":[a-zA-Z0-9]")
+
+	reg := regexp.MustCompile(":[a-zA-Z0-9]")
 	url := strings.Split(req.URL.String(), "/")
 	path := strings.Split(r.Path, "/")
 
