@@ -42,9 +42,9 @@ func (r *Router) SetFaviconRoute(f func(http.ResponseWriter, *http.Request)) {
 	r.NotFound = &Route{Path: "/favicon.ico", handler: http.HandlerFunc(f)}
 }
 
-func (r *Router) SetStaticPath(path string) {
+func (r *Router) SetStaticPath(path string, dir string) {
 	r.StaticHandler = r.NewRoute("GET", path, func(w http.ResponseWriter, req *http.Request) {
-		http.StripPrefix("/static/", http.FileServer(http.Dir("static")))
+		http.StripPrefix(path, http.FileServer(http.Dir(dir)))
 		http.ServeFile(w, req, req.URL.Path[1:])
 	})
 }
