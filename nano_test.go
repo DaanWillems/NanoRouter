@@ -7,8 +7,31 @@ import (
 	"testing"
 )
 
+//Test handler
 func test(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "succes")
+}
+
+func TestEmptyUrl(t *testing.T) {
+	rr := httptest.NewRecorder()
+
+	r := NewRouter()
+
+	r.NewRoute("GET", "", test)
+
+	req, err := http.NewRequest("GET", "", nil)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r.ServeHTTP(rr, req)
+
+	expected := "succes"
+
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
 }
 
 func TestBasicUrl(t *testing.T) {

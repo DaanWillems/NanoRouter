@@ -35,7 +35,7 @@ func (r *Router) NewRoute(httpMethod string, route string, f func(http.ResponseW
 }
 
 func (r *Router) SetNotFoundRoute(f func(http.ResponseWriter, *http.Request)) {
-	r.NotFound = &Route{Path: "/pagenotfound", handler: http.HandlerFunc(f)}
+	r.NotFound = &Route{Path: "", handler: http.HandlerFunc(f)}
 }
 
 func (r *Router) SetFaviconRoute(f func(http.ResponseWriter, *http.Request)) {
