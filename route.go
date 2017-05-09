@@ -3,66 +3,67 @@ package NanoRouter
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
-type Router struct {
-	static        string
-	routes        []*Route
-	NotFound      *Route
-	StaticHandler *Route
+//Stores the path and the handler
+type Route struct {
+	method  string
+	Path    string
+	handler func(w http.ResponseWriter, req *http.Request, vars map[string]string)
 }
 
-func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("ROUTE: " + req.URL.String())
-	route := r.find(req)
-	route.Handle(w, req)
-}
-
-func NewRouter() *Router {
-	r := &Router{}
-	r.SetNotFoundRoute(notFound)
-	return r
-}
-
-func (r *Router) NewRoute(httpMethod string, route string, f func(http.ResponseWriter, *http.Request, map[string]string)) *Route {
-	nr := &Route{method: httpMethod, Path: route, handler: f}
-	r.routes = append(r.routes, nr)
-	return nr
-}
-
-func (r *Router) SetNotFoundRoute(f func(http.ResponseWriter, *http.Request, map[string]string)) {
-	r.NotFound = &Route{Path: "", handler: f}
-}
-
-func (r *Router) SetFaviconRoute(f func(http.ResponseWriter, *http.Request, map[string]string)) {
-	r.NotFound = &Route{Path: "/favicon.ico", handler: f}
-}
-
-func (r *Router) SetStaticPath(dir string) {
-	r.StaticHandler = r.NewRoute("GET", "", func(w http.ResponseWriter, req *http.Request, vars map[string]string) {
-		if strings.HasSuffix(req.URL.Path, "/") {
-			http.NotFound(w, req)
-			return
-		}
-		http.ServeFile(w, req, dir+req.URL.Path[1:])
-	})
-}
-
-func (r *Router) find(req *http.Request) *Route {
-	for _, route := range r.routes {
-		if route.match(req) {
-			return route
-		}
+//Matches the url against its own path, returns true when there is a match
+func (r *Route) match(req *http.Request) bool {
+	if !r.matchURL(req.URL.String()) {
+		return false
+	}
+	//See if http method matches the route
+	if req.Method != r.method {
+		return false
 	}
 
-	if r.StaticHandler == nil {
-		return r.NotFound
-	}
-
-	return r.StaticHandler
+	return true
 }
 
-func notFound(w http.ResponseWriter, r *http.Request, vars map[string]string) {
-	fmt.Fprintf(w, "not found")
+func (r *Route) matchURL(rawURL string) bool {
+	url := strings.Split(rawURL, "/")
+	path := strings.Split(r.Path, "/")
+	reg, _ := regexp.Compile(":[a-zA-Z0-9]")
+
+	for i, c := range url {
+		if len(url) != len(path) {
+			return false
+		}
+
+		if c != path[i] && !(reg.MatchString(path[i])) {
+			return false
+		}
+	}
+	return true
+}
+
+//Handle executes the handler function attached to this route
+func (r *Route) Handle(w http.ResponseWriter, req *http.Request) {
+	fmt.Printf("%v", r.handler)
+	r.handler(w, req, r.parseVars(req))
+}
+
+func (r *Route) parseVars(req *http.Request) map[string]string {
+	vars := make(map[string]string)
+	for k, v := range req.URL.Query() {
+		vars[k] = v[0]
+	}
+
+	reg := regexp.MustCompile(":[a-zA-Z0-9]")
+	url := strings.Split(req.URL.String(), "/")
+	path := strings.Split(r.Path, "/")
+
+	for i, p := range path {
+		if reg.MatchString(p) {
+			vars[p[1:len(p)]] = url[i]
+		}
+	}
+	return vars
 }
